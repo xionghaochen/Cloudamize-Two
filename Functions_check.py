@@ -85,13 +85,23 @@ def connect_db(host1, dbname1, port1, user1, password1,host2, dbname2, port2, us
     conn2=psycopg2.connect(conn_string2)
     cursor2=conn2.cursor()
     
-    print ("Database %s is connected!\n"%dbname2)  
+    print ("Database %s is connected!\n"%dbname2)
     
-    cursor1.execute('select pp.proname,pg_get_functiondef(pp.oid) from pg_proc pp inner join pg_namespace pn on (pp.pronamespace = pn.oid) inner join pg_language pl on (pp.prolang = pl.oid) where pl.lanname NOT IN (\'c\',\'internal\') and pn.nspname NOT LIKE \'pg_%\' and pn.nspname <> \'information_schema\' order by pp.proname asc;')
-    function1=cursor1.fetchall()
+    print("Please enter a function you want to check(Null input will check all of the functions): ")
+    f=input()
     
-    cursor2.execute('select pp.proname,pg_get_functiondef(pp.oid) from pg_proc pp inner join pg_namespace pn on (pp.pronamespace = pn.oid) inner join pg_language pl on (pp.prolang = pl.oid) where pl.lanname NOT IN (\'c\',\'internal\') and pn.nspname NOT LIKE \'pg_%\' and pn.nspname <> \'information_schema\' order by pp.proname asc;')
-    function2=cursor2.fetchall()
+    if f=='':
+        cursor1.execute('select pp.proname,pg_get_functiondef(pp.oid) from pg_proc pp inner join pg_namespace pn on (pp.pronamespace = pn.oid) inner join pg_language pl on (pp.prolang = pl.oid) where pl.lanname NOT IN (\'c\',\'internal\') and pn.nspname NOT LIKE \'pg_%\' and pn.nspname <> \'information_schema\' order by pp.proname asc;')
+        function1=cursor1.fetchall()
+        
+        cursor2.execute('select pp.proname,pg_get_functiondef(pp.oid) from pg_proc pp inner join pg_namespace pn on (pp.pronamespace = pn.oid) inner join pg_language pl on (pp.prolang = pl.oid) where pl.lanname NOT IN (\'c\',\'internal\') and pn.nspname NOT LIKE \'pg_%\' and pn.nspname <> \'information_schema\' order by pp.proname asc;')
+        function2=cursor2.fetchall()
+    else:
+        cursor1.execute('select proname,pg_get_functiondef(oid) from pg_proc where proname=\'%s\';'%f)
+        function1=cursor1.fetchall()
+        
+        cursor2.execute('select proname,pg_get_functiondef(oid) from pg_proc where proname=\'%s\';'%f)
+        function2=cursor2.fetchall()
     
     if function1!=[] and function2!=[]:
         function_compare(dbname1,function1,dbname2,function2)
@@ -138,7 +148,7 @@ def function_compare(dbname1,function1,dbname2,function2):
                             print('There is no match function %s in database %s\n'%(function1[i][0],dbname2))
                             break
             if count==0:
-                print('For database %s, the functions might be matching\n'%dbname1)
+                print('For database %s, the function might be matching\n'%dbname1)
                 break
             else:
                 break
@@ -176,10 +186,11 @@ def function_compare(dbname1,function1,dbname2,function2):
                             print('There is no match function %s in database %s\n'%(function2[x][0],dbname1))
                             break
             if count==0:
-                print('The functions in those two databases are matching\n')
+                print('For database %s, the function might be matching\n'%dbname2)
+                print('The function in those two databases are matching\n')
                 break
             else:
-                print('The functions in those two databases are not matching\n')
+                print('The function in those two databases are not matching\n')
                 break
     
 if __name__=='__main__':
